@@ -1,0 +1,68 @@
+USE [DatabaseConfiguration1]
+GO
+/****** Object:  StoredProcedure [dbo].[Datalist]    Script Date: 05-09-2025 14:07:32 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER       PROCEDURE [dbo].[Datalist]
+@Status nvarchar(max)='',
+@SalesInvoiceDate datetime = NULL,
+@SalesInvoiceNumber nvarchar(max) ='',
+@GrossAmount decimal(18,0)= null,
+@DiscountAmount decimal(18,0)=null,
+@TaxAmount decimal(18,0)=null,
+@NetAmount decimal(18,0)=null,
+@FromDate date=NULL,
+@ToDate date=NULL,
+@CustomerName nvarchar(max) = null
+AS
+BEGIN
+	begin
+		if @Status='Select'
+
+		SELECT 
+           c.Customer_Id,
+           c.Customer_Name,
+           sm.State_Id,
+           sm.State_Name as State,
+           c.Customer_Address,
+           c.Customer_PhoneNumber AS Phone_No,
+           s.SalesInvoice_Number,
+           s.SalesInvoice_Date,
+           s.GrossAmount,
+           s.DiscountAmount,
+           s.NetAmount
+        FROM CustomerDetail c
+        JOIN SalesInvoice s ON c.Customer_Id = s.Customer_Id
+        LEFT JOIN StateMaster sm ON c.Customer_State_Id = sm.State_Id;
+	end
+
+	begin
+		if @Status ='DateBySearchData'
+		select c.Customer_Id,c.Customer_Name,
+		   sm.State_Name as State,
+		c.Customer_Address,c.Customer_PhoneNumber as Phone_No,
+		s.SalesInvoice_Number,s.SalesInvoice_Date,s.GrossAmount,s.DiscountAmount,s.NetAmount
+		from CustomerDetail c join SalesInvoice s on c.Customer_Id = s.Customer_Id 
+		  LEFT JOIN 
+        StateMaster sm ON c.Customer_State_id = sm.State_Id
+		where SalesInvoice_Date  between @FromDate and @ToDate ;
+	end
+
+	begin
+		if @Status = 'SearchCustomerName'
+
+		select c.Customer_Id,c.Customer_Name,
+		   sm.State_Name as State,
+		   c.Customer_Address,c.Customer_PhoneNumber as Phone_No,
+		s.SalesInvoice_Number,s.SalesInvoice_Date,s.GrossAmount,s.DiscountAmount,s.NetAmount
+		from CustomerDetail c join SalesInvoice s on c.Customer_Id = s.Customer_Id 
+		  LEFT JOIN 
+        StateMaster sm ON c.Customer_State_id = sm.State_Id
+		where  Customer_Name like @CustomerName + '%';
+	end
+	
+END
+
+--exec Datalist @Status='SearchCustomerName',@CustomerName = 'Rahul'
